@@ -1,0 +1,2 @@
+pandas==1.4.3
+mendeleev==0.20.1
