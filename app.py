@@ -1,14 +1,16 @@
 import tkinter as tk
-#from mendeleev.fetch import fetch_table
-from get_element import elements
+from get_element import elements_df as elements
 import pandas as pd
+
+print(elements.head())
 class PeriodicTable:
     def __init__(self, root):
         self.root = root
         self.root.title("Periodic Table")
         self.element_data = elements
         self.create_table()
-
+        self.info_label = tk.Label(self.root, text="", wraplength=400, justify="left")  # Info label
+        self.info_label.grid(row=10, column=0, columnspan=18, pady=(10, 0)) # Place info label below
     def create_table(self):
          # Element data (symbol, row, column)
         element_positions = {
@@ -26,7 +28,7 @@ class PeriodicTable:
         # Create buttons for each element
         for symbol, (row,col) in element_positions.items():
             btn = tk.Button(self.root, text=symbol, width=5, height=2, command=lambda s=symbol: self.element_click(s))
-            btn.grid(row=row, column=col, padx=2, pady=2, sticky="nsew")
+            btn.grid(row=row, column=col, padx=2, pady=2, sticky="nsew",ipadx=10,ipady=10)
             
             # Configure row and column weights for proper resizing (IMPORTANT!)
         for i in range(9):  # Adjust to the number of rows you need
@@ -35,11 +37,17 @@ class PeriodicTable:
             self.root.grid_columnconfigure(i, weight=1) # Make columns expandable
             # Bind click event (for future functionality)
             #btn.bind('<Button-1>', lambda e, s=symbol: self.element_click(s))
-    
+
     def element_click(self, symbol):
         # Placeholder for click functionality
-        print(f"Clicked on {symbol}")
+        try:
+            info = self.element_data.loc[self.element_data['symbol'] == symbol].iloc[0]
+            info_text = f"Name: {info['name']}\n"
+            #print(f"Clicked on {symbol}")
+            self.info_label.config(text=info_text) # Update the label
 
+        except IndexError:  # Handle cases where the element isn't found in the DataFrame
+            self.info_label.config(text=f"Element '{symbol}' not found in database.")
 def main():
     root = tk.Tk()
     app = PeriodicTable(root)
@@ -47,4 +55,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
