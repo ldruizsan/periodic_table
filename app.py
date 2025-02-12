@@ -42,7 +42,17 @@ class PeriodicTable:
         # Placeholder for click functionality
         try:
             info = self.element_data.loc[self.element_data['symbol'] == symbol].iloc[0]
-            info_text = f"Name: {info['name']}\n"
+            atomic_number = self.element_data.loc[self.element_data['symbol'] == symbol].index[0]
+            info_text = f"Name: {info['name']}\n" \
+                        f"Atomic Number: {atomic_number}\n" \
+                        f"Atomic Weight: {info['atomic_weight']}\n" \
+                        f"Atomic Radius: {info['atomic_radius']}\n" \
+                        f"Atomic Volume: {info['atomic_volume']}\n" \
+                        f"Period: {info['period']}\n" \
+                        f"Group: {info['group_id']}\n" \
+                        f"Block: {info['block']}\n" \
+                        f"Electronic Configuration: {info['electronic_configuration']}\n" \
+                        f"Electronegativity: {info['en_pauling']}\n"\
             #print(f"Clicked on {symbol}")
             self.info_label.config(text=info_text) # Update the label
 
