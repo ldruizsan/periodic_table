@@ -3,10 +3,10 @@ import pandas as pd
 
 elements = pd.DataFrame(fetch_table("elements"))
 elements.set_index("atomic_number",inplace=True)
-print(elements.columns)
+#print(elements.columns)
 
 elements_df = pd.DataFrame(data=elements, columns=["_annotation","atomic_radius","atomic_volume", "block", 
-                                                   "description", "group_id","name","period","en_pauling","symbol",
+                                                   "description", "group_id","name","period","series_id","en_pauling","symbol",
                                                    "atomic_weight","electronic_configuration","is_monoisotopic",
                                                    "is_radioactive","cas","fusion_heat","evaporation_heat", 
                                                    "thermal_conductivity","density","heat_of_formation"], index=elements.index)
