@@ -1,2 +1,3 @@
 pandas==1.4.3
 mendeleev==0.20.1
+Flask==2.3.2

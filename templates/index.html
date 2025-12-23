@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Periodic Table of the Elements</title>
+  <style>
+    :root { --gap: 8px; --cols: 18; }
+     /* Container max-width for tile sizing */
+     .container { box-sizing: border-box; width: 100%; max-width: 1200px; margin: 0; padding: 0 8px; }
+    /* Use a single table grid so headers and cells share column sizing */
+    .table-wrap { box-sizing: border-box; padding-right: calc(100% / var(--cols) * 2); display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: var(--gap); }
+    .group-row { display: contents; }
+    .grid { display: contents; width:100%; }
+    .group-label { height: calc(1.8rem + 1.0vmin); display:flex; align-items:center; justify-content:center; font-size: clamp(12px, 1.6vw, 18px); font-weight: 700; }
+    .group-label.span { grid-column: auto; display:flex; flex-direction:column; align-items:center; font-weight:700; }
+    .group-line { width: 100%; height: 2px; background: rgba(0,0,0,0.6); margin-top:6px; border-radius:2px; }
+    .cell { width: 100%; aspect-ratio: 1 / 1; display:flex; flex-direction:column; align-items:center; justify-content:center; border:1px solid #333; cursor:pointer; font-weight:bold; color: #000; padding:6px; box-sizing:border-box; }
+    .tile-number { font-size: clamp(8px, 1.0vw, 12px); opacity:0.9; }
+    .tile-symbol { font-size: clamp(14px, 2.4vw, 28px); line-height:1; }
+    .tile-name { font-size: clamp(9px, 1.0vw, 12px); margin-top:4px; text-align:center; max-width:90%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tile-weight { font-size: clamp(8px, 0.9vw, 11px); margin-top:2px; opacity:0.85; }
+    .empty { background:transparent; border:none; cursor:default; }
+
+    /* 10 Element Families */
+    .alkali-metal { background: #ff6b6b; }           /* Family 1: Red */
+    .alkaline-earth { background: #ffa500; }        /* Family 2: Orange */
+    .transition-metal { background: #ffcc00; }      /* Family 3: Gold */
+    .lanthanide { background: #c77dff; }            /* Family 4: Orchid */
+    .actinide { background: #87ceeb; }              /* Family 5: Sky Blue */
+    .halogen { background: #dda0dd; }               /* Family 6: Plum */
+    .noble-gas { background: #fff39a; }             /* Family 7: Pale Yellow */
+    .nonmetal { background: #d3d3d3; }              /* Family 8: Light Gray */
+    .metalloid { background: #e6cc80; }             /* Family 9: Tan/Bronze */
+    .post-transition-metal { background: #b0c4de; } /* Family 10: Slate Blue */
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; font-size: clamp(12px, 1.2vw, 14px); justify-content:center; }
+    .legend-item { display: flex; align-items: center; gap: 6px; white-space: normal; }
+    .legend-color { width: 18px; height: 18px; border: 1px solid #333; flex-shrink: 0; }
+    /* Ensure the legend container can grow to fit its content so the border wraps all items */
+     /* Legend area: keep flex layout so legend items remain unchanged; ensure border wraps both columns */
+     .legend-area { display: flex; flex-direction: row; gap: 24px; padding: 10px; padding-right: 10px; box-sizing: border-box; background: rgba(255,255,255,0.95); border: 2px solid #ddd; align-items: flex-start; justify-content: flex-start; align-self: center; flex-wrap: wrap; width: fit-content; }
+     .legend-area .legend-row { display:flex; gap: 10px; flex-direction: column; align-items: flex-start; min-width: 140px; }
+
+    /* Toggle button and heatmap styles */
+    #heatmap-toggle { display: block; margin: 0 0 12px; padding: 8px 16px; font-size: 14px; cursor: pointer; border: 1px solid #ccc; background: #f5f5f5; border-radius: 4px; }
+    #heatmap-toggle:hover { background: #e0e0e0; }
+    .table-wrap.heatmap-mode .cell { border-color: #999; }
+    .cell.heatmap-color { /* heatmap color will be set inline */ }
+    
+    /* Electronegativity scale (legend replacement) */
+    #en-scale { display: none; margin-top: 12px; flex-direction: column; align-items: center; gap: 12px; }
+    #en-scale.visible { display: flex; }
+    #en-scale-bar { width: 300px; height: 30px; background: linear-gradient(to right, rgb(0, 0, 255), rgb(255, 0, 0)); border: 1px solid #999; border-radius: 4px; }
+    #en-scale-labels { display: flex; justify-content: space-between; width: 300px; font-size: 12px; font-weight: bold; }
+
+    #info { margin-top: 12px; padding:8px; border:1px solid #ccc; min-height:120px; white-space:pre-wrap; }
+    h1 { text-align: left; }
+    body { font-family: Arial, Helvetica, sans-serif; padding: 16px; box-sizing: border-box; }
+  </style>
+</head>
+<body>
+  <h1>Periodic Table of the Elements</h1>
+  <button id="heatmap-toggle">Show Electronegativity Heatmap</button>
+  <div class="container">
+
+  <div class="table-wrap">
+    {# Legend area inside the grid: occupies the 3x10 block between IIIB and IIB #}
+    <div class="legend-area" style="grid-column: {{ legend_col_start + 1 }} / span {{ legend_col_span }}; grid-row: {{ legend_row_start + 2 }} / span {{ legend_row_span }};" role="region" aria-label="Legend">
+      <!-- Electronegativity scale (placed here so it occupies same grid slot as legend) -->
+      <div id="en-scale">
+        <div id="en-scale-bar"></div>
+        <div id="en-scale-labels">
+          <span id="en-min-label">{{ en_min }}</span>
+          <span id="en-max-label">{{ en_max }}</span>
+        </div>
+      </div>
+      <div class="legend-row">
+        <div class="legend-item"><div class="legend-color alkali-metal"></div> Alkali Metals</div>
+        <div class="legend-item"><div class="legend-color alkaline-earth"></div> Alkaline Earth</div>
+        <div class="legend-item"><div class="legend-color transition-metal"></div> Transition Metals</div>
+        <div class="legend-item"><div class="legend-color lanthanide"></div> Lanthanides</div>
+        <div class="legend-item"><div class="legend-color actinide"></div> Actinides</div>
+      </div>
+      <div class="legend-row">
+        <div class="legend-item"><div class="legend-color halogen"></div> Halogens</div>
+        <div class="legend-item"><div class="legend-color noble-gas"></div> Noble Gases</div>
+        <div class="legend-item"><div class="legend-color nonmetal"></div> Nonmetals</div>
+        <div class="legend-item"><div class="legend-color metalloid"></div> Metalloids</div>
+        <div class="legend-item"><div class="legend-color post-transition-metal"></div> Post-transition Metals</div>
+      </div>
+    </div>
+    <div class="group-row">
+      {% for c in cols %}
+        {# Combine the three "VIII" headers into a single spanning label at the first of the three columns #}
+        {% if group_labels[c] == 'VIII' and c == 7 %}
+          <div class="group-label span" style="grid-column: {{ c+1 }} / span 3;">VIIIB
+            <div class="group-line" aria-hidden="true"></div>
+          </div>
+        {% elif group_labels[c] == 'VIII' and c in [8,9] %}
+          {# Skip rendering the duplicate headers for the middle/right of the group #}
+        {% else %}
+          <div class="group-label">{{ group_labels[c] }}</div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <div class="grid">
+    {% for r in rows %}
+      {% for c in cols %}
+        {# Skip cells that fall inside the legend-area block #}
+        {% set in_legend = (r >= legend_row_start and r < (legend_row_start + legend_row_span) and c >= legend_col_start and c < (legend_col_start + legend_col_span)) %}
+        {% if in_legend %}
+          {# Skip rendering inside legend block #}
+        {% else %}
+          {% set sym = symbols_by_pos.get((r,c)) %}
+          {% if sym %}
+            {% set cat = symbol_categories.get(sym, 'unknown') %}
+            {% set meta = symbol_meta.get(sym, {}) %}
+            {% set hm_color = heatmap_colors.get(sym, 'transparent') %}
+            <div class="cell {{ cat }}" data-symbol="{{sym}}" data-heatmap-color="{{hm_color}}">
+              <div class="tile-number">{{ meta['atomic_number'] }}</div>
+              <div class="tile-symbol">{{ sym }}</div>
+              <div class="tile-name" title="{{ meta['name'] }}">{{ meta['name'] }}</div>
+              <div class="tile-weight">{{ meta['atomic_weight'] }}</div>
+            </div>
+          {% else %}
+            <div class="cell empty"></div>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+    </div>
+  </div>
+  <div id="info">Click an element to see details.</div>
+  </div>
+  <script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>
